@@ -41,4 +41,8 @@ cat >> config.json <<EOF
 }
 EOF
 
-exec python3 auto_sync.py
+if [ -n "$PORT" ]; then
+  exec python3 auto_sync.py --external-port "$PORT"
+else
+  exec python3 auto_sync.py
+fi
