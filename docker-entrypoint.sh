@@ -41,8 +41,11 @@ cat >> config.json <<EOF
 }
 EOF
 
-if [ -n "$PORT" ]; then
-  exec python3 auto_sync.py --external-port "$PORT"
+# If EXTERNAL_PORT is set, add it as an argument and print a log message
+if [ -n "$EXTERNAL_PORT" ]; then
+  echo "Using port $EXTERNAL_PORT"
+  exec python3 auto_sync.py --external-port "$EXTERNAL_PORT"
 else
+  echo "No external port specified, running without --external-port"
   exec python3 auto_sync.py
 fi
