@@ -40,7 +40,7 @@ class MyRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        print(f"Got a response from Bunq!")
+        print("Got a response from Bunq!")
 
         parsed_url = urlparse(self.path)
         query_parameters = parse_qs(parsed_url.query)
@@ -66,12 +66,12 @@ class MyRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(
             str.encode(
-                f"<div>Authentication successful! Access token for Bunq: {access_token}.</div>",
+                "<div>Authentication successful! Access token for Bunq: {}.</div>".format(access_token),
             )
         )
         self.wfile.write(
             str.encode(
-                f"<div>Once you have copied the token you can close this window.</div>",
+                "<div>Once you have copied the token you can close this window.</div>",
             )
         )
 
@@ -89,7 +89,7 @@ server_port = config["oauth_server_port"]
 oauth_state = str(uuid.uuid4())
 oauth_client_id = config["oauth_client_id"]
 oauth_client_secret = config["oauth_client_secret"]
-oauth_redirect_url = f"http://localhost:{server_port}"
+oauth_redirect_url = "http://localhost:{}".format(server_port)
 
 
 # From https://beta.doc.bunq.com/basics/oauth#token-exchange
@@ -108,7 +108,7 @@ def put_token_exchange(code, oauth_client_id, oauth_client_secret, oauth_redirec
 
     # From https://beta.doc.bunq.com/basics/oauth#token-exchange
     # construct the complete URL with parameters
-    bunq_token_url = f"{bunq_base_token_url}?{encoded_token_params}"
+    bunq_token_url = "{}?{}".format(bunq_base_token_url, encoded_token_params)
 
     response = requests.post(bunq_token_url)
     return response.json()['access_token']
@@ -125,7 +125,7 @@ def get_oauth_url(oauth_state, oauth_client_id, oauth_redirect_url):
     }
     # Encode the parameters
     encoded_params = urlencode(params)
-    url = f"{base_url}?{encoded_params}"
+    url = "{}?{}".format(base_url, encoded_params)
     return url
 
 
@@ -147,6 +147,6 @@ handler = partial(
 )
 httpd = HTTPServer(server_address, handler)
 
-print(f"Starting server on port {server_port}...")
+print("Starting server on port {}...".format(server_port))
 httpd.handle_request()
 print("Check the browser for the access token!")

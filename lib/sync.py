@@ -18,7 +18,7 @@ def pair_to_str(pair):
 
 def key_fail(key, conf, account):
     return (conf[key] != "*" and
-       conf[key].casefold() != account[key].casefold()) 
+       conf[key].casefold() != account[key].casefold())
 
 
 def matching_pairs(bunq, ynab, conf):
@@ -85,7 +85,7 @@ class Sync:
             if conf.get("ynab_account_name", "") == "":
                 conf["ynab_account_name"] = "*"
 
-        self.syncpairs = [{**ba, **ya} 
+        self.syncpairs = [{**ba, **ya}
             for ba in self.bunq_accounts
             for ya in self.ynab_accounts
             if [True for cp in self.confpairs
@@ -135,9 +135,9 @@ class Sync:
             if transaction and transaction["cleared"] != "uncleared":
                 transaction["payment"] = p
                 transaction["approved"] = True
-                transaction["dirty"] = True                
+                transaction["dirty"] = True
             else:
-                # YNAB payee is max 50 chars 
+                # YNAB payee is max 50 chars
                 new_trans = {
                     "import_id": import_id,
                     "account_id": syncpair["ynab_account_id"],
@@ -171,7 +171,7 @@ class Sync:
             start_dt = dt.strftime("%Y-%m-%d")
 
         log.info("Reading ynab transactions from {}...".format(start_dt))
-        transactions = ynab.get_transactions(syncpair["ynab_budget_id"], 
+        transactions = ynab.get_transactions(syncpair["ynab_budget_id"],
                                          syncpair["ynab_account_id"], start_dt)
         log.info("Retrieved {} ynab transactions...".format(len(transactions)))
 
@@ -183,8 +183,8 @@ class Sync:
                 # Manual clear combined with timezone can put a transaction
                 # in the UTC future
                 # https://github.com/wesselt/bunq2ynab/issues/46
-                log.warning(f"Last YNAB transaction {start_dt} is in the "
-                            f"future.  Using today instead.")
+                log.warning("Last YNAB transaction {} is in the "
+                            "future.  Using today instead.".format(start_dt))
                 start_dt = today_dt
 
         log.info("Reading bunq payments from {}...".format(start_dt))

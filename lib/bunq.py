@@ -145,16 +145,16 @@ def sign(action, method, headers, data):
     headers['X-Bunq-Client-Authentication'] = get_installation_token()
     # Device-server and session-server must be signed
     private_key = get_private_key()
-    
+
     if isinstance(data, str):
         data = data.encode('utf-8')
-    
+
     signature = private_key.sign(
         data,
         padding.PKCS1v15(),
         hashes.SHA256()
     )
-    
+
     sig_str = base64.b64encode(signature).decode("utf-8")
     headers['X-Bunq-Client-Signature'] = sig_str
 
@@ -247,7 +247,7 @@ def get(method):
     # https://beta.doc.bunq.com/basics/pagination
     if "count=" in method:
         raise Exception("Internal error: call to bunq.get() with count "
-            f"argument.  Call fetch() instead.  Method: {method}")
+            "argument.  Call fetch() instead.  Method: {}".format(method))
     if "?" in method:
         method_count = method + "&count=200"
     else:

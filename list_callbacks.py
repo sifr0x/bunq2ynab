@@ -39,7 +39,7 @@ def process_user(k, u):
         name = next(iter(v["requested_by_user"].values()))["display_name"]
     else:
         name = u["display_name"]
-    print(f"Callbacks for user {name}:")
+    print("Callbacks for user {}:".format(name))
     method = "v1/user/{}/notification-filter-url".format(u["id"])
     nfs = bunq.get(method)
     print_notification_filter(nfs)
@@ -48,7 +48,7 @@ def process_user(k, u):
     for acs in bunq.get(method):
         for ac in acs.values():
             process_account(u, ac)
- 
+
 
 method = "v1/user"
 users = bunq.get(method)

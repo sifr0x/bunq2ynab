@@ -41,15 +41,15 @@ def get_public_ip():
     if external_ip:
         return external_ip
     for url in public_ip_urls:
-        log.info(f"Retrieving public IP from {url}...")
+        log.info("Retrieving public IP from {}...".format(url))
         try:
             result = requests.get(url, timeout=3).text
             if ipaddress.ip_address(result):
-                log.info(f"Got public IP: {result}")
+                log.info("Got public IP: {}".format(result))
                 return result
         # Just "except" would catch KeyboardInterrupt and others
         except Exception as e:
-            log.error(f"Public API {url} failed: {e}")
+            log.error("Public API {} failed: {}".format(url, e))
             pass
     raise Exception("Unable to determine public IP")
 
@@ -155,18 +155,18 @@ def send_mail(subject, body):
             return
         log.info("Sending exception email...")
         port = int(config.get("smtp_port", 465))
-        log.info(f"Using port {port}...")
+        log.info("Using port {}...".format(port))
         mail_to = config.get("smtp_to", user)
         password = config.get("smtp_password", "")
         mail_from = config.get("smtp_from", "bunq2ynab@" + get_hostname())
 
-        email_text = f"""\
-From: {mail_from}
-To: {mail_to}
-Subject: {subject}
+        email_text = """\
+From: {}
+To: {}
+Subject: {}
 
-{body}
-"""
+{}
+""".format(mail_from, mail_to, subject, body)
         if port == 25:
             smtp_server = smtplib.SMTP(server, port=port, timeout=10)
         else:

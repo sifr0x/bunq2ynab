@@ -124,12 +124,12 @@ def setup_callback():
         if not portmap_port:
             log.error("Failed to map port, not registering callback.")
             return
-        log.info(f"Succesfully forwarded port {portmap_port}")
+        log.info("Succesfully forwarded port {}".format(portmap_port))
         callback_port = portmap_port
 
     if callback_port != 443:
-        log.warning(f"Callbacks port is {callback_port}.  Callbacks are "
-                    f"broken for ports other than 443")
+        log.warning("Callbacks port is {}.  Callbacks are "
+                    "broken for ports other than 443".format(callback_port))
     for uid in sync_obj.get_bunq_user_ids():
         url = "https://{}:{}/{}".format(callback_host, callback_port, marker)
         bunq_api.add_callback(uid, marker, url)
@@ -152,7 +152,7 @@ def wait_for_callback():
             source_ip = address[0]
             log.info("Incoming call from {}...".format(source_ip))
             if not network.is_bunq_server(source_ip):
-                log.warning(f"Source {source_ip} not in BUNQ range")
+                log.warning("Source {} not in BUNQ range".format(source_ip))
                 continue
         except socket.timeout as e:
             pass
@@ -225,10 +225,10 @@ try:
             if mail_after_errors <= consecutive_errors:
                 network.send_mail(short, descr)
             else:
-                log.info(f"No mail until {mail_after_errors} errors")
+                log.info("No mail until {} errors".format(mail_after_errors))
             wait_secs = on_error_wait_secs(consecutive_errors)
-            log.error(f"Failed {consecutive_errors} times, " +
-                f"waiting {wait_secs} seconds for retry.")
+            log.error("Failed {} times, waiting {} seconds for retry.".format(
+                consecutive_errors, wait_secs))
             time.sleep(wait_secs)
 finally:
     teardown_callback()

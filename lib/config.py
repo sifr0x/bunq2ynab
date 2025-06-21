@@ -82,8 +82,8 @@ class Config:
         if not hasattr(self, "config"):
             raise Exception("Load config before using it")
         if "-" in name:
-            raise Exception(f"Use underscore instead of dash when "
-                            f"getting config value {name}")
+            raise Exception("Use underscore instead of dash when "
+                            "getting config value {}".format(name))
         return self.config.get(name, default)
 
 
@@ -114,14 +114,14 @@ class Config:
                 json.dump(example_config, f, indent=4)
             log.critical("Missing configuration.  Example created, please edit " + self.config_fn)
             sys.exit(1)
-        
+
         try:
             with open(self.config_fn, encoding='utf-8') as f:
                 self.config = json.load(f)
         except Exception as e:
             log.critical("Error loading configuration {}: {}".format(self.config_fn, e))
             sys.exit(1)
-        
+
         if (self.config["api_token"] == "enter bunq api key here" or self.config["personal_access_token"] == "enter ynab token here"):
             log.critical("Configuration incomplete, please edit " + self.config_fn)
             sys.exit(1)
@@ -150,9 +150,9 @@ class Config:
             sys.exit(1)
         date_regex = r"^\d\d\d\d-\d\d-\d\d$"
         if self["start"] and not re.match(date_regex, self["start"]):
-            log.critical(f'Configuration setting "start" is set to '
-                f'"{self["start"]}". '
-                f'It must be in the year-month-day format, like 2022-12-31.')
+            log.critical('Configuration setting "start" is set to '
+                '"{0}". '
+                'It must be in the year-month-day format, like 2022-12-31.'.format(self["start"]))
             sys.exit(1)
 
 config = Config()
