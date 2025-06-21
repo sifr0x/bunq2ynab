@@ -15,9 +15,9 @@ from lib.log import log
 # ----- Parse command line arguments
 
 config.parser.add_argument("--port", type=int,
-    help="TCP port number to listen to.  Default is a random port")
+    help="TCP port number for the server to listen on. For Railway, set this to $PORT (usually 8080)")
 config.parser.add_argument("--external-port", type=int,
-    help="TCP port number to register for callback")
+    help="TCP port number to register for callback. Not needed for Railway deployments")
 # Don't set defaults here.  A default looks like a command line parameter,
 # so lib.config would ignore an entry in config.json
 config.parser.add_argument("--wait", type=int,
@@ -28,7 +28,7 @@ config.parser.add_argument("--refresh", type=int,
     help="Time to refresh callback setup.  Defaults 480 minutes (8 hours)")
 config.parser.add_argument("--callback-host",
     help="Hostname to use in callback (e.g., example.up.railway.app for Railway). "
-         "When specified, uses port 443 in callback URL. Defaults to host public IP")
+         "When specified, uses port 443 in callback URL without port number. Defaults to host public IP")
 config.parser.add_argument("--callback-marker",
     help="Unique marker for callbacks.  Defaults bunq2ynab-autosync")
 config.load()
@@ -133,7 +133,12 @@ def setup_callback():
         callback_port = portmap_port
 
     # For explicit callback hosts (like Railway), use port 443 for the callback URL
-    # since they handle HTTPS termination and routing
+    # since they handle HTTPS termination and routing.
+    #
+    # Railway deployment guide:
+    # 1. Set --port to $PORT env var (usually 8080) for the internal web server
+    # 2. Set --callback-host to your Railway app URL (e.g. myapp.up.railway.app)
+    # 3. Do NOT set --external-port as it's not needed with Railway's proxy
     callback_url_port = callback_port
     if explicit_callback_host:
         log.info("Using explicit callback host {}, setting callback URL port to 443".format(callback_host))
@@ -145,10 +150,12 @@ def setup_callback():
 
     for uid in sync_obj.get_bunq_user_ids():
         # For port 443, omit the port from the URL (standard HTTPS)
+        # Railway and similar platforms expect a clean URL without port numbers
         if callback_url_port == 443:
             url = "https://{}/{}".format(callback_host, marker)
         else:
             url = "https://{}:{}/{}".format(callback_host, callback_url_port, marker)
+        log.info("Registering callback URL: {}".format(url))
         bunq_api.add_callback(uid, marker, url)
 
 

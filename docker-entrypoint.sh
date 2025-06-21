@@ -44,10 +44,10 @@ EOF
 # Build command line arguments
 ARGS=""
 
-# If EXTERNAL_PORT is set, add it as an argument and print a log message
-if [ -n "$EXTERNAL_PORT" ]; then
-  echo "Using port $EXTERNAL_PORT"
-  ARGS="$ARGS --external-port $EXTERNAL_PORT"
+# If PORT is set, add it as an argument for the listening port
+if [ -n "$PORT" ]; then
+  echo "Listening on port $PORT"
+  ARGS="$ARGS --port $PORT"
 fi
 
 # If CALLBACK_HOST is set, add it as an argument and print a log message
