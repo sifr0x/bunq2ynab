@@ -115,7 +115,7 @@ def setup_callback():
     if not using_portmap:
         callback_port = external_port or local_port
     elif external_port:
-        log.info(f"Forwarding specified port {external_port}...")
+        log.info("Forwarding specified port {}...".format(external_port))
         network.portmap_add(external_port, local_port, marker)
         callback_port = external_port  # Regardless of success
     else:
