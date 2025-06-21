@@ -3,6 +3,8 @@ import random
 import socket
 import time
 import traceback
+import re
+import urllib.parse
 
 from lib import bunq_api
 from lib import network
@@ -31,6 +33,8 @@ config.parser.add_argument("--callback-host",
          "When specified, uses port 443 in callback URL without port number. Defaults to host public IP")
 config.parser.add_argument("--callback-marker",
     help="Unique marker for callbacks.  Defaults bunq2ynab-autosync")
+config.parser.add_argument("--skip-ip-validation", action='store_true',
+    help="Skip validating callback source IP against BUNQ server ranges. Use when behind proxies like Railway")
 config.load()
 
 
@@ -106,6 +110,10 @@ def setup_callback():
         log.error("No public IP found, not registering callback.")
         return
 
+    # Log if we're skipping IP validation
+    if config.get("skip_ip_validation", False):
+        log.info("IP validation is disabled. This should only be used when behind proxies like Railway")
+
     if not serversocket:
         serversocket, local_port = bind_port()
         log.info("Listening on port {0}...".format(local_port))
@@ -172,12 +180,65 @@ def wait_for_callback():
         serversocket.settimeout(time_left)
         try:
             (clientsocket, address) = serversocket.accept()
-            clientsocket.close()
             source_ip = address[0]
-            log.info("Incoming call from {}...".format(source_ip))
-            if not network.is_bunq_server(source_ip):
-                log.warning("Source {} not in BUNQ range".format(source_ip))
-                continue
+
+            # Process the HTTP request
+            try:
+                request_data = clientsocket.recv(4096).decode('utf-8', errors='ignore')
+
+                # Verify the request is for our callback endpoint
+                marker = config.get("callback_marker") or "bunq2ynab-autosync"
+                request_line_match = re.search(r'^(GET|POST)\s+(/[^\s]*)', request_data, re.MULTILINE)
+
+                is_valid_callback = False
+                if request_line_match:
+                    path = request_line_match.group(2)
+                    decoded_path = urllib.parse.unquote(path)
+                    log.info("Received request for path: {}".format(decoded_path))
+
+                    # Check if the path matches our callback marker
+                    if decoded_path == '/' + marker or decoded_path.startswith('/' + marker + '/'):
+                        is_valid_callback = True
+                    else:
+                        log.warning("Request path does not match callback marker")
+
+                # Only process valid callback requests
+                if is_valid_callback:
+                    # Look for X-Real-IP header
+                    real_ip_match = re.search(r'X-Real-IP:\s*([^\s\r\n]+)', request_data, re.IGNORECASE)
+                    if real_ip_match:
+                        real_ip = real_ip_match.group(1).strip()
+                        log.info("X-Real-IP header found: {}".format(real_ip))
+                        source_ip = real_ip
+
+                    # If X-Real-IP not found, try X-Forwarded-For
+                    elif not real_ip_match:
+                        forwarded_for_match = re.search(r'X-Forwarded-For:\s*([^\s\r\n,]+)', request_data, re.IGNORECASE)
+                        if forwarded_for_match:
+                            forwarded_ip = forwarded_for_match.group(1).strip()
+                            log.info("X-Forwarded-For header found: {}".format(forwarded_ip))
+                            source_ip = forwarded_ip
+                else:
+                    log.info("Ignoring request that doesn't match callback path")
+                    source_ip = None  # Skip the validation check below
+
+                # Send HTTP 200 OK response
+                response = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nOK"
+                clientsocket.sendall(response.encode('utf-8'))
+            except Exception as e:
+                log.warning("Error processing request: {}".format(e))
+            finally:
+                clientsocket.close()
+
+            # Only validate and process if this is a request we care about
+            if source_ip is not None:
+                log.info("Incoming call from {}...".format(source_ip))
+                skip_ip_validation = config.get("skip_ip_validation", False)
+                if not skip_ip_validation and not network.is_bunq_server(source_ip):
+                    log.warning("Source {} not in BUNQ range. Use --skip-ip-validation if behind a proxy".format(source_ip))
+                    continue
+                elif skip_ip_validation:
+                    log.info("Skipping IP validation as configured")
         except socket.timeout as e:
             pass
 
