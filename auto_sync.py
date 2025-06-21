@@ -27,7 +27,8 @@ config.parser.add_argument("--interval", type=int,
 config.parser.add_argument("--refresh", type=int,
     help="Time to refresh callback setup.  Defaults 480 minutes (8 hours)")
 config.parser.add_argument("--callback-host",
-    help="Hostname to use in callback.  Defaults to host public IP")
+    help="Hostname to use in callback (e.g., example.up.railway.app for Railway). "
+         "When specified, uses port 443 in callback URL. Defaults to host public IP")
 config.parser.add_argument("--callback-marker",
     help="Unique marker for callbacks.  Defaults bunq2ynab-autosync")
 config.load()
@@ -112,6 +113,10 @@ def setup_callback():
 
     marker = config.get("callback_marker") or "bunq2ynab-autosync"
     external_port = config.get("external_port")
+
+    # Check if callback host was explicitly provided by user
+    explicit_callback_host = config.get("callback_host") is not None
+
     if not using_portmap:
         callback_port = external_port or local_port
     elif external_port:
@@ -127,11 +132,23 @@ def setup_callback():
         log.info("Succesfully forwarded port {}".format(portmap_port))
         callback_port = portmap_port
 
-    if callback_port != 443:
+    # For explicit callback hosts (like Railway), use port 443 for the callback URL
+    # since they handle HTTPS termination and routing
+    callback_url_port = callback_port
+    if explicit_callback_host:
+        log.info("Using explicit callback host {}, setting callback URL port to 443".format(callback_host))
+        callback_url_port = 443
+
+    if callback_url_port != 443:
         log.warning("Callbacks port is {}.  Callbacks are "
-                    "broken for ports other than 443".format(callback_port))
+                    "broken for ports other than 443".format(callback_url_port))
+
     for uid in sync_obj.get_bunq_user_ids():
-        url = "https://{}:{}/{}".format(callback_host, callback_port, marker)
+        # For port 443, omit the port from the URL (standard HTTPS)
+        if callback_url_port == 443:
+            url = "https://{}/{}".format(callback_host, marker)
+        else:
+            url = "https://{}:{}/{}".format(callback_host, callback_url_port, marker)
         bunq_api.add_callback(uid, marker, url)
 
 

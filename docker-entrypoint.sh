@@ -41,11 +41,26 @@ cat >> config.json <<EOF
 }
 EOF
 
+# Build command line arguments
+ARGS=""
+
 # If EXTERNAL_PORT is set, add it as an argument and print a log message
 if [ -n "$EXTERNAL_PORT" ]; then
   echo "Using port $EXTERNAL_PORT"
-  exec python3 auto_sync.py --external-port "$EXTERNAL_PORT"
+  ARGS="$ARGS --external-port $EXTERNAL_PORT"
+fi
+
+# If CALLBACK_HOST is set, add it as an argument and print a log message
+if [ -n "$CALLBACK_HOST" ]; then
+  echo "Using callback host $CALLBACK_HOST"
+  ARGS="$ARGS --callback-host $CALLBACK_HOST"
+fi
+
+# Execute with the built arguments
+if [ -n "$ARGS" ]; then
+  echo "Running: python3 auto_sync.py$ARGS"
+  exec python3 auto_sync.py $ARGS
 else
-  echo "No external port specified, running without --external-port"
+  echo "No arguments specified, running with defaults"
   exec python3 auto_sync.py
 fi
